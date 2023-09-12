@@ -50,11 +50,15 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
-    "@jupyterlite/server": "^0.1.0-beta.15"
+    "@jupyterlab/services": "^7.0.5",
+    "@jupyterlite/kernel": "^0.1.2",
+    "@jupyterlite/server": "^0.1.0-beta.15",
+    "waforth": "^0.19.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.0.0",
     "@jupyterlab/builder": "^3.1.0",
+    "@types/react": "^18.2.21",
     "@typescript-eslint/eslint-plugin": "^4.8.1",
     "@typescript-eslint/parser": "^4.8.1",
     "eslint": "^7.14.0",
