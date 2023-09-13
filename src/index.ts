@@ -8,10 +8,10 @@ import { IKernel, IKernelSpecs } from '@jupyterlite/kernel';
 import { WAForthKernel } from './kernel';
 
 /**
- * Initialization data for the jupyterlite-waforth-kernel extension.
+ * A plugin to register the WAForth kernel.
  */
-const plugin: JupyterLiteServerPlugin<void> = {
-  id: 'jupyterlite-waforth-kernel:plugin',
+const kernel: JupyterLiteServerPlugin<void> = {
+  id: 'jupyterlite-waforth-kernel:kernel',
   autoStart: true,
   requires: [IKernelSpecs],
   activate: (app: JupyterLiteServer, kernelspecs: IKernelSpecs) => {
@@ -33,4 +33,6 @@ const plugin: JupyterLiteServerPlugin<void> = {
   }
 };
 
-export default plugin;
+const plugins: JupyterLiteServerPlugin<any>[] = [kernel];
+
+export default plugins;

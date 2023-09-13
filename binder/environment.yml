@@ -1,4 +1,4 @@
-# a mybinder.org-ready environment for demoing jupyterlite_waforth_kernel
+# a mybinder.org-ready environment for demoing jupyterlite-waforth-kernel
 # this environment may also be used locally on Linux/MacOS/Windows, e.g.
 #
 #   conda env update --file binder/environment.yml

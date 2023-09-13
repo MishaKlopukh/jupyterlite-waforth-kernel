@@ -52,12 +52,9 @@ export class WAForthKernel extends BaseKernel implements IKernel {
   ): Promise<void> {
     this._forth = await new WAForth().load();
     this._forth.onEmit = withLineBuffer((str: string) => {
-      this.publishExecuteResult({
-        execution_count: this.executionCount,
-        data: {
-          'text/plain': str
-        },
-        metadata: {}
+      this.stream({
+        name: 'stdout',
+        text: str
       });
     });
     if (options.allowEval) {
@@ -155,6 +152,9 @@ export class WAForthKernel extends BaseKernel implements IKernel {
       code,
       this.opts.silent ?? true
     );
+
+    // @ts-ignore
+    this._forth.onEmit?.flush?.();
 
     if (isSuccess(result)) {
       this.publishExecuteResult({
