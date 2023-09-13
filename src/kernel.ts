@@ -51,13 +51,20 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     options: WAForthKernelOptions
   ): Promise<void> {
     this._forth = await new WAForth().load();
-    this._forth.onEmit = withLineBuffer((str: string) => {
-      this.stream({
-        name: 'stdout',
-        text: str
-      });
-    });
-    if (options.allowEval) {
+    let prelude = `
+    : S+ 
+      2SWAP DUP 3 PICK + HERE SWAP 2SWAP 2OVER ALLOT SWAP 
+      0 DO
+        SWAP DUP C@ 2 PICK C! 1+ SWAP 1+ 
+      LOOP 
+      SWAP DROP 4 PICK SWAP 4 PICK 
+      0 DO 
+        SWAP DUP C@ 2 PICK C! 1+ SWAP 1+ 
+      LOOP 
+      2DROP
+    ;
+    `;
+    if (options.allowEval ?? true) {
       this._forth.bind('EVAL', (forth: WAForth) => {
         const str = forth.popString();
         try {
@@ -68,12 +75,28 @@ export class WAForthKernel extends BaseKernel implements IKernel {
           forth.pushString('');
         }
       });
+      prelude += ' : EVAL S" EVAL" SCALL ; ';
     }
     this._forth.bind('LOG', (forth: WAForth) => {
       console.log(forth.popString());
     });
+    prelude += ' : LOG S" LOG" SCALL ; ';
     this._forth.bind('ALERT', (forth: WAForth) => {
       alert(forth.popString());
+    });
+    prelude += ' : ALERT S" ALERT" SCALL ; ';
+    this._forth.onEmit = withLineBuffer(console.log);
+    const result = this._forth.interpret(prelude, this.opts.silent ?? true);
+    // @ts-ignore
+    this._forth.onEmit?.flush?.();
+    if (!isSuccess(result)) {
+      throw new Error('WAForth Initialization failed');
+    }
+    this._forth.onEmit = withLineBuffer((str: string) => {
+      this.stream({
+        name: 'stdout',
+        text: str
+      });
     });
   }
 
