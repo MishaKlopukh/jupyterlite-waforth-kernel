@@ -35,6 +35,7 @@ function WAForthErrstr(err: ErrorCode): string {
 export class WAForthKernel extends BaseKernel implements IKernel {
   private _ready = new PromiseDelegate<void>();
   private _forth?: WAForth;
+  private _words?: string[];
   private opts: WAForthKernelOptions;
 
   constructor(options: WAForthKernelOptions) {
@@ -52,6 +53,7 @@ export class WAForthKernel extends BaseKernel implements IKernel {
   ): Promise<void> {
     this._forth = await new WAForth().load();
     let prelude = `
+    : STATE! STATE @ ; IMMEDIATE
     : S+ 
       2SWAP DUP 3 PICK + HERE SWAP 2SWAP 2OVER ALLOT SWAP 
       0 DO
@@ -92,6 +94,7 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     if (!isSuccess(result)) {
       throw new Error('WAForth Initialization failed');
     }
+    this._words = this._get_words();
     this._forth.onEmit = withLineBuffer((str: string) => {
       this.stream({
         name: 'stdout',
@@ -116,6 +119,30 @@ export class WAForthKernel extends BaseKernel implements IKernel {
    */
   get ready(): Promise<void> {
     return this._ready.promise;
+  }
+
+  protected _get_words(): string[] {
+    if (!this._forth || !this._state_interp) {
+      return [];
+    }
+    const _onEmit = this._forth.onEmit;
+    let words: string[] = [];
+    this._forth.onEmit = withLineBuffer((line: string) => {
+      words = words.concat(line.split(' '));
+    });
+    this._forth.interpret('WORDS', true);
+    // @ts-ignore
+    this._forth.onEmit.flush();
+    this._forth.onEmit = _onEmit;
+    return words;
+  }
+
+  protected get _state_interp(): boolean {
+    if (!this._forth) {
+      return false;
+    }
+    this._forth.interpret('STATE!', true);
+    return this._forth.pop() === 0;
   }
 
   /**
@@ -180,13 +207,24 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     this._forth.onEmit?.flush?.();
 
     if (isSuccess(result)) {
-      this.publishExecuteResult({
-        execution_count: this.executionCount,
-        data: {
-          'text/plain': ' ok'
-        },
-        metadata: {}
-      });
+      if (this._state_interp) {
+        this._words = this._get_words();
+        this.publishExecuteResult({
+          execution_count: this.executionCount,
+          data: {
+            'text/plain': ' ok'
+          },
+          metadata: {}
+        });
+      } else {
+        this.publishExecuteResult({
+          execution_count: this.executionCount,
+          data: {
+            'text/plain': ' compiling'
+          },
+          metadata: {}
+        });
+      }
 
       return {
         status: 'ok',
@@ -218,7 +256,19 @@ export class WAForthKernel extends BaseKernel implements IKernel {
   async completeRequest(
     content: KernelMessage.ICompleteRequestMsg['content']
   ): Promise<KernelMessage.ICompleteReplyMsg['content']> {
-    throw new Error('Not implemented');
+    const { code, cursor_pos } = content;
+    const cursor_start = code.slice(0, cursor_pos).lastIndexOf(' ') + 1;
+    const partial_word = code.slice(cursor_start, cursor_pos);
+    const completions = (this._words ?? [])
+      .concat(code.match(/(?<=(:|CONSTANT|VARIABLE|CREATE)\s+)\S+/g) ?? [])
+      .filter((word: string) => word.startsWith(partial_word));
+    return {
+      matches: completions,
+      cursor_start,
+      cursor_end: cursor_pos,
+      metadata: {},
+      status: 'ok'
+    };
   }
 
   /**
