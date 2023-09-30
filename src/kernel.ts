@@ -73,6 +73,23 @@ export class WAForthKernel extends BaseKernel implements IKernel {
       LOOP 
       2DROP
     ;
+    : NOOP ;
+    DEFER " IMMEDIATE
+    :NONAME
+      POSTPONE ;
+      EXECUTE
+    ; IS " IMMEDIATE
+    : S""
+      STATE @ IF
+        ['] NOOP ['] " DEFER!
+      ELSE
+        [ ' " DEFER@ ] LITERAL
+        ['] " DEFER!
+        :NONAME
+      THEN
+      POSTPONE S"
+    ; IMMEDIATE
+    ' NOOP IS "
     `;
     if (options.allowEval ?? true) {
       this._forth.bind('EVAL', (forth: WAForth) => {
