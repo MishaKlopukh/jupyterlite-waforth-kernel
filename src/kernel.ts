@@ -54,6 +54,14 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     this._forth = await new WAForth().load();
     let prelude = `
     : STATE! STATE @ ; IMMEDIATE
+    : SHOWSTAT
+      STATE @ IF
+        ." compiling"
+      ELSE
+        ." <" DEPTH <# 0 #S #> TYPE ." > " .S ." ok."
+      THEN
+      CR
+    ; IMMEDIATE
     : S+ 
       2SWAP DUP 3 PICK + HERE SWAP 2SWAP 2OVER ALLOT SWAP 
       0 DO
@@ -88,6 +96,16 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     });
     prelude += ' : ALERT S" ALERT" SCALL ; ';
     this._forth.onEmit = withLineBuffer(console.log);
+    this._forth.interpret_str = function (str) {
+      const _onEmit = this.onEmit;
+      let result = '';
+      this.onEmit = (c: string) => {
+        result = result + c;
+      }
+      this.interpret(str, true);
+      this.onEmit = _onEmit;
+      return result;
+    }
     const result = this._forth.interpret(prelude, this.opts.silent ?? true);
     // @ts-ignore
     this._forth.onEmit?.flush?.();
@@ -125,16 +143,7 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     if (!this._forth || !this._state_interp) {
       return [];
     }
-    const _onEmit = this._forth.onEmit;
-    let words: string[] = [];
-    this._forth.onEmit = withLineBuffer((line: string) => {
-      words = words.concat(line.split(' '));
-    });
-    this._forth.interpret('WORDS', true);
-    // @ts-ignore
-    this._forth.onEmit.flush();
-    this._forth.onEmit = _onEmit;
-    return words;
+    return this._forth.interpret_str('WORDS').split(' ');
   }
 
   protected get _state_interp(): boolean {
@@ -209,22 +218,17 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     if (isSuccess(result)) {
       if (this._state_interp) {
         this._words = this._get_words();
-        this.publishExecuteResult({
-          execution_count: this.executionCount,
-          data: {
-            'text/plain': ' ok'
-          },
-          metadata: {}
-        });
-      } else {
-        this.publishExecuteResult({
-          execution_count: this.executionCount,
-          data: {
-            'text/plain': ' compiling'
-          },
-          metadata: {}
-        });
       }
+
+      const statusmsg = this._forth.interpret_str("SHOWSTAT");
+
+      this.publishExecuteResult({
+        execution_count: this.executionCount,
+        data: {
+          'text/plain': statusmsg
+        },
+        metadata: {}
+      });
 
       return {
         status: 'ok',
