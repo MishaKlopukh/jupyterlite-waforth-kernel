@@ -113,7 +113,8 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     });
     prelude += ' : ALERT S" ALERT" SCALL ; ';
     this._forth.onEmit = withLineBuffer(console.log);
-    this._forth.interpret_str = function (str) {
+    // @ts-ignore
+    this._forth.interpret_str = function (str: string) {
       const _onEmit = this.onEmit;
       let result = '';
       this.onEmit = (c: string) => {
@@ -160,6 +161,7 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     if (!this._forth || !this._state_interp) {
       return [];
     }
+    // @ts-ignore
     return this._forth.interpret_str('WORDS').split(' ');
   }
 
@@ -237,6 +239,7 @@ export class WAForthKernel extends BaseKernel implements IKernel {
         this._words = this._get_words();
       }
 
+      // @ts_ignore
       const statusmsg = this._forth.interpret_str("SHOWSTAT");
 
       this.publishExecuteResult({
