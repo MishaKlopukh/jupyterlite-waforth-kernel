@@ -1,4 +1,4 @@
-import { KernelMessage } from '@jupyterlab/services';
+import { KernelMessage, Contents } from '@jupyterlab/services';
 
 import { BaseKernel, IKernel } from '@jupyterlite/kernel';
 
@@ -8,6 +8,7 @@ import WAForth, { ErrorCode, isSuccess, withLineBuffer } from 'waforth';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface WAForthKernelOptions extends IKernel.IOptions {
+  fsContents?: Contents.IModel;
   allowEval?: boolean;
   silent?: boolean;
   caseSensitive?: boolean;
@@ -112,6 +113,19 @@ export class WAForthKernel extends BaseKernel implements IKernel {
       alert(forth.popString());
     });
     prelude += ' : ALERT S" ALERT" SCALL ; ';
+    if (this.opts.fsContents) {
+      this._forth.bind('INCLUDE', (forth: WAForth) => {
+        let fname = forth.popString();
+        if (!fname[0] == '/') {
+          fname = this.location + fname;
+        }
+        this.opts.fsContents.get(fname, {contents: 1})
+          .then(({ contents }) => {
+            this._forth.interpret(contents, this.opts.silent ?? true);
+          })
+      });
+      prelude += ' : INCLUDE BL WORD COUNT S" INCLUDE" SCALL ; '
+    }
     this._forth.onEmit = withLineBuffer(console.log);
     // @ts-ignore
     this._forth.interpret_str = function (str: string) {

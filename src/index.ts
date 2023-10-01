@@ -5,7 +5,7 @@ import {
 
 import { IKernel, IKernelSpecs } from '@jupyterlite/kernel';
 
-import { WAForthKernel } from './kernel';
+import { WAForthKernel, WAForthKernelOptions } from './kernel';
 
 /**
  * A plugin to register the WAForth kernel.
@@ -27,6 +27,8 @@ const kernel: JupyterLiteServerPlugin<void> = {
         }
       },
       create: async (options: IKernel.IOptions): Promise<IKernel> => {
+        let options: WAForthKernelOptions = options;
+        options.fsContents = app.serviceManager.contents;
         return new WAForthKernel(options);
       }
     });
