@@ -8,7 +8,7 @@ import WAForth, { ErrorCode, isSuccess, withLineBuffer } from 'waforth';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface WAForthKernelOptions extends IKernel.IOptions {
-  fsContents?: Contents.IModel;
+  fsContents?: ContentsManager;
   allowEval?: boolean;
   silent?: boolean;
   caseSensitive?: boolean;
@@ -255,7 +255,7 @@ export class WAForthKernel extends BaseKernel implements IKernel {
         this._words = this._get_words();
       }
 
-      // @ts_ignore
+      // @ts-ignore
       const statusmsg = this._forth.interpret_str("SHOWSTAT");
 
       this.publishExecuteResult({
