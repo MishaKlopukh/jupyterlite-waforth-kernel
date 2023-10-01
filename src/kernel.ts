@@ -123,7 +123,7 @@ export class WAForthKernel extends BaseKernel implements IKernel {
         // @ts-ignore
         this.opts.fsContents.get(fname, {content: 1}).then(({ content }) => {
           // @ts-ignore
-          this._forth.interpret(contents, this.opts.silent ?? true);
+          this._forth.interpret(content, this.opts.silent ?? true);
         });
       });
       prelude += ' : INCLUDE BL WORD COUNT S" INCLUDE" SCALL ; '
