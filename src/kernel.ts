@@ -121,7 +121,7 @@ export class WAForthKernel extends BaseKernel implements IKernel {
           fname = this.location + fname;
         }
         // @ts-ignore
-        this.opts.fsContents.get(fname, {contents: 1}).then(({ contents }) => {
+        this.opts.fsContents.get(fname, {content: 1}).then(({ content }) => {
           // @ts-ignore
           this._forth.interpret(contents, this.opts.silent ?? true);
         });
