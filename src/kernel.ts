@@ -116,13 +116,15 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     if (this.opts.fsContents) {
       this._forth.bind('INCLUDE', (forth: WAForth) => {
         let fname = forth.popString();
-        if (!fname[0] == '/') {
+        if (fname[0] !== '/') {
+          // @ts-ignore
           fname = this.location + fname;
         }
-        this.opts.fsContents.get(fname, {contents: 1})
-          .then(({ contents }) => {
-            this._forth.interpret(contents, this.opts.silent ?? true);
-          })
+        // @ts-ignore
+        this.opts.fsContents.get(fname, {contents: 1}).then(({ contents }) => {
+          // @ts-ignore
+          this._forth.interpret(contents, this.opts.silent ?? true);
+        });
       });
       prelude += ' : INCLUDE BL WORD COUNT S" INCLUDE" SCALL ; '
     }
@@ -131,8 +133,8 @@ export class WAForthKernel extends BaseKernel implements IKernel {
     this._forth.interpret_str = function (str: string) {
       const _onEmit = this.onEmit;
       let result = '';
-      this.onEmit = (c: string) => {
-        result = result + c;
+      this.onEmit = (c: number) => {
+        result = result + String.fromCharCode(c);
       }
       this.interpret(str, true);
       this.onEmit = _onEmit;
