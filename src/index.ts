@@ -28,6 +28,7 @@ const kernel: JupyterLiteServerPlugin<void> = {
       },
       create: async (options: IKernel.IOptions): Promise<IKernel> => {
         let koptions: WAForthKernelOptions = options;
+        // @ts-ignore
         koptions.fsContents = app?.serviceManager?.contents;
         return new WAForthKernel(koptions);
       }

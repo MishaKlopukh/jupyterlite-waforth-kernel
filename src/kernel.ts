@@ -1,4 +1,4 @@
-import { KernelMessage, Contents } from '@jupyterlab/services';
+import { KernelMessage, ContentsManager } from '@jupyterlab/services';
 
 import { BaseKernel, IKernel } from '@jupyterlite/kernel';
 
